@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = JsonWorkbenchApplication.class)
+@SpringBootTest(classes = JsonWorkbenchApplication.class, properties = "app.request.max-body-size=64")
 @AutoConfigureMockMvc
 class ApiErrorHandlingTest {
     @Autowired
@@ -65,6 +65,26 @@ class ApiErrorHandlingTest {
                 .andReturn().getResponse().getHeader(RequestIdFilter.HEADER_NAME);
 
         UUID.fromString(generatedId);
+    }
+
+    @Test
+    void missingRequestIdIsGeneratedAndReturned() throws Exception {
+        String generatedId = mockMvc.perform(get("/api/v1/health"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getHeader(RequestIdFilter.HEADER_NAME);
+
+        UUID.fromString(generatedId);
+    }
+
+    @Test
+    void oversizedApiBodyUsesStandardizedPayloadError() throws Exception {
+        mockMvc.perform(post("/api/v1/test/validated")
+                        .contentType("application/json")
+                        .content("{\"value\":\"" + "x".repeat(80) + "\"}"))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("REQUEST_TOO_LARGE"))
+                .andExpect(jsonPath("$.requestId").isNotEmpty())
+                .andExpect(jsonPath("$.message").value("Request body exceeds the allowed size"));
     }
 
     @Test
