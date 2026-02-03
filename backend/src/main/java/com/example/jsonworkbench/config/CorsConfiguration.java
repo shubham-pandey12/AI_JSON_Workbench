@@ -16,6 +16,9 @@ public class CorsConfiguration implements WebMvcConfigurer {
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toArray(String[]::new);
+        if (this.allowedOrigins.length == 0 || Arrays.asList(this.allowedOrigins).contains("*")) {
+            throw new IllegalArgumentException("Configure one or more explicit CORS origins; wildcard origins are not allowed");
+        }
     }
 
     @Override
