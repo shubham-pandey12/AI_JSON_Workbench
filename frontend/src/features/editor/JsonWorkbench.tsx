@@ -68,3 +68,74 @@ export default function JsonWorkbench() {
     }
   }
 
+  async function copyJson() {
+    if (!validateCurrent()) return
+    try {
+      await navigator.clipboard.writeText(value)
+      setMessage({ text: 'JSON copied to the clipboard.', tone: 'success' })
+    } catch {
+      setMessage({ text: 'Clipboard access failed. Check browser permissions and try again.', tone: 'error' })
+    }
+  }
+
+  function downloadJson() {
+    if (!validateCurrent()) return
+    try {
+      const blob = new Blob([value], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'workbench.json'
+      link.click()
+      URL.revokeObjectURL(url)
+      setMessage({ text: 'JSON download started.', tone: 'success' })
+    } catch {
+      setMessage({ text: 'Could not create the download. Try copying the JSON instead.', tone: 'error' })
+    }
+  }
+
+  function clearEditor() {
+    updateValue('')
+    setMessage({ text: 'Editor cleared.', tone: 'info' })
+  }
+
+  const statusState = validation === null ? 'idle' : validation.valid ? 'valid' : 'invalid'
+  const statusText = validation === null ? 'Not validated' : validation.valid ? 'Valid JSON' : 'Invalid JSON'
+
+  return (
+    <main className="workbench-shell">
+      <header className="app-header">
+        <div className="brand"><span className="brand-mark" aria-hidden="true">{`{ }`}</span><div><p className="eyebrow">Developer tools</p><h1>AI JSON Workbench</h1></div></div>
+        <span className="privacy-note"><span aria-hidden="true">●</span> Processed locally in your browser</span>
+      </header>
+      <div className="page-heading">
+        <div><p className="eyebrow">JSON editor</p><h2>Shape your data.</h2><p className="page-subtitle">Format, inspect, and validate JSON without sending it anywhere.</p></div>
+        <StatusIndicator state={statusState}>{statusText}</StatusIndicator>
+      </div>
+      <div className="workspace-grid">
+        <Panel className="editor-panel">
+          <div className="toolbar" aria-label="JSON actions">
+            <div className="toolbar-group">
+              <Button tone="primary" onClick={() => transform(formatJson, 'JSON formatted with two-space indentation.')}>Format</Button>
+              <Button onClick={() => transform(minifyJson, 'JSON minified.')}>Minify</Button>
+              <Button onClick={validateCurrent}>Validate</Button>
+            </div>
+            <div className="toolbar-group toolbar-file-actions">
+              <input ref={fileInputRef} className="visually-hidden" type="file" accept=".json,application/json" aria-label="Upload JSON file" tabIndex={-1} onChange={(event) => void uploadFile(event.target.files?.[0])} />
+              <Button onClick={() => fileInputRef.current?.click()}>Upload</Button>
+              <Button onClick={() => void copyJson()}>Copy</Button>
+              <Button onClick={downloadJson}>Download</Button>
+              <Button tone="quiet" onClick={clearEditor}>Clear</Button>
+            </div>
+          </div>
+          <div className="editor-meta"><span>JSON</span><span>UTF-8 <i aria-hidden="true">·</i> 2 spaces</span></div>
+          <JsonCodeEditor value={value} onChange={updateValue} />
+          <div className="editor-footer"><span>{value.length.toLocaleString()} characters</span><span>Changes stay in this browser</span></div>
+        </Panel>
+        <JsonExplorer source={value} />
+      </div>
+      {message && <InlineMessage tone={message.tone}>{message.text}</InlineMessage>}
+      <footer className="app-footer"><span>Local-first by design</span><i aria-hidden="true">•</i><span>AI actions will always be explicit</span></footer>
+    </main>
+  )
+}
