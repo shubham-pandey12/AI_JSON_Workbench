@@ -38,3 +38,43 @@ export function searchJson(
     const keyMatches = typeof node.key === 'string' && node.key !== '$'
       && node.key.toLocaleLowerCase().includes(normalizedQuery)
     const isPrimitive = node.value === null || typeof node.value !== 'object'
+    const primitiveText = node.value === null ? 'null' : String(node.value)
+    const valueMatches = isPrimitive && primitiveText.toLocaleLowerCase().includes(normalizedQuery)
+    if (keyMatches || valueMatches) matches.push({ path: node.path, ancestors: node.ancestors })
+
+    if (node.depth >= maxDepth) {
+      if (node.value !== null && typeof node.value === 'object' && Object.keys(node.value).length > 0) truncated = true
+      continue
+    }
+
+    const arrayValue = Array.isArray(node.value) ? node.value : null
+    const objectValue = node.value !== null && typeof node.value === 'object' && !arrayValue
+      ? node.value
+      : null
+    const objectKeys = objectValue ? Object.keys(objectValue) : []
+    const childCount = arrayValue ? arrayValue.length : objectKeys.length
+    const availableSlots = Math.max(0, maxNodes - visited - stack.length)
+    const visitCount = Math.min(childCount, availableSlots)
+    if (visitCount < childCount) truncated = true
+
+    for (let index = visitCount - 1; index >= 0; index -= 1) {
+      const key = arrayValue ? index : objectKeys[index]
+      const value = arrayValue
+        ? arrayValue[index]
+        : (objectValue as { [key: string]: JsonValue })[key as string]
+      stack.push({
+        value,
+        key,
+        path: appendJsonPath(node.path, key),
+        ancestors: [...node.ancestors, node.path],
+        depth: node.depth + 1,
+      })
+    }
+  }
+
+  return { matches, truncated }
+}
+
+export function describePrimitive(value: null | boolean | number | string): string {
+  return typeof value === 'string' ? JSON.stringify(value) : String(value)
+}
