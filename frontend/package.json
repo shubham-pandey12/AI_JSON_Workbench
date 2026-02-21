@@ -10,9 +10,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/language": "^6.13.1",
+    "@jitl/quickjs-wasmfile-release-sync": "^0.32.0",
     "codemirror": "^6.0.2",
+    "quickjs-emscripten-core": "^0.32.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
