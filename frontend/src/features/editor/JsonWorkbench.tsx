@@ -6,6 +6,8 @@ import StatusIndicator from '../../components/ui/StatusIndicator'
 import type { JsonValidation } from '../../types/json'
 import { formatJson, minifyJson, validateJson } from '../../utils/json'
 import JsonExplorer from '../explorer/JsonExplorer'
+import AiAssistant from '../assistant/AiAssistant'
+import TransformationWorkspace from '../transformation/TransformationWorkspace'
 import JsonCodeEditor from './JsonCodeEditor'
 
 const exampleJson = `{
@@ -134,6 +136,8 @@ export default function JsonWorkbench() {
         </Panel>
         <JsonExplorer source={value} />
       </div>
+      <AiAssistant source={value} />
+      <TransformationWorkspace source={value} />
       {message && <InlineMessage tone={message.tone}>{message.text}</InlineMessage>}
       <footer className="app-footer"><span>Local-first by design</span><i aria-hidden="true">•</i><span>AI actions will always be explicit</span></footer>
     </main>
